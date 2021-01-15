@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% include 'admin/post_forms.html'%}
+
+{% endblock %}
+
+{% block script_footer %}
+<script src="{{ url_for('static', filename='js/manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tagmanager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/filemanager.js') }}"></script>
+
+<script>
+    let data = new FormData();
+    function confirm() {
+        const captionInput = $('#caption_input').prop('value');
+        const bodyInput = $('#body_input').prop('value');
+        data.append('caption', captionInput);
+        data.append('body', bodyInput);
+
+        let nextFileNum = 1;
+        files.forEach( file => {
+            data.append(`file${ nextFileNum }`, files[nextFileNum-1])
+            nextFileNum++;
+        })
+        
+        let tagString = '';
+        tags.forEach( tag => tagString += ' ; '+tag);
+        tagString = tagString.replace(/ ; /, '');
+        data.append('tags', tagString);
+
+        $.ajax({
+            type: 'POST',
+            url: '/admin/create_post',
+            data: data,
+            // required to tell jquery that no further porcessing of the data is needed
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: response => {
+                if (response.redirect) window.location.href = response.url
+            },
+        });
+        data = new FormData();
+        nextFileNum = 1;
+    }
+</script>
+
+<style>
+    .file_div.over {
+        border: 2px dashed #000;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,121 @@
+
+@keyframes bg-appear {
+	0% {
+		opacity: 0;
+	}
+	10% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+#headerContainer {
+	background-color: #000000;
+}
+
+#header {
+	width: 100%;
+	height: 100vh;
+	margin-top: -96px;
+	position: relative;
+	background-color: #000000;
+	background-image: url("../img/header.jpg");
+	background-repeat: no-repeat;
+    background-size: cover;
+	background-attachment: fixed;
+	background-position: center 0px; 
+	
+	animation-name: bg-appear;
+	animation-duration: 3s;
+}
+
+@keyframes h1-appear {
+	0% {
+		top: 55%; 
+		opacity: 0;
+	}
+	30% {
+		top: 55%; 
+		opacity: 0;
+	}
+	100% {
+		top: 50%; 
+		opacity: 1;
+	}
+}
+
+#header h1 {
+	color: #FFF;
+	text-align: center;
+	width: 100%;
+	padding: 32px;
+	box-sizing: border-box;
+	font-family: 'Montserrat', sans-serif;
+	font-size: 64px;
+	font-weight: 900;
+	text-transform: uppercase;
+	text-shadow: 0px 0px 100px rgba(0, 0, 0, 1);
+	display: block;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	
+	animation-name: h1-appear;
+	animation-duration: 3s;
+}
+
+@keyframes button-appear {
+	0% {
+		bottom: 24px; 
+		opacity: 0;
+	}
+	90% {
+		bottom: 24px; 
+		opacity: 0;
+	}
+	100% {
+		bottom: 48px;
+		opacity: 1;
+	}
+}
+
+#scrollDownButton {
+	position: absolute;
+	left: 50%;
+	bottom: 48px;
+	animation-name: button-appear;
+	animation-duration: 3s;
+	transition: opacity 200ms;
+	opacity: 0;
+}
+
+#scrollDownButton[visible] {
+	opacity: 1;
+}
+
+#scrollDownButton a {
+	position: relative;
+	display: block;
+	left: -50%;
+}
+
+#scrollDownButton a {
+	height: 40px;
+	width: 40px;
+	padding: 8px;
+	border-radius: 50%;
+	background: rgba(0,0,0,0.3);
+	transition: background 300ms;
+}
+
+#scrollDownButton a:hover {
+	background: rgba(0,0,0,0.6);
+}
+
+#scrollDownButton a svg {
+	height: 40px;
+	width: 40px;
+}
+

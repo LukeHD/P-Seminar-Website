@@ -1,0 +1,185 @@
+<link href="{{ url_for('static', filename='css/create_post.css') }}" rel="stylesheet">
+
+<script>
+
+function pasteMedia(mediaSpan)
+{
+	var mediaItem = mediaSpan.parentNode;
+	var media = null;
+	for (var i = 0; i < mediaItem.childNodes.length; i++) {
+		if (mediaItem.childNodes[i].className == "media") {
+			media = mediaItem.childNodes[i];
+			break;
+		}        
+	}
+	pasteHtmlAtCaret(media.innerHTML);
+}
+
+function pasteHtmlAtCaret(html) {
+    var sel, range;
+    if (window.getSelection) {
+        // IE9 and non-IE
+        sel = window.getSelection();
+        if (sel.getRangeAt && sel.rangeCount) {
+            range = sel.getRangeAt(0);
+            range.deleteContents();
+
+            // Range.createContextualFragment() would be useful here but is
+            // only relatively recently standardized and is not supported in
+            // some browsers (IE9, for one)
+            var el = document.createElement("div");
+            el.innerHTML = html;
+            var frag = document.createDocumentFragment(), node, lastNode;
+            while ( (node = el.firstChild) ) {
+                lastNode = frag.appendChild(node);
+            }
+            range.insertNode(frag);
+
+            // Preserve the selection
+            if (lastNode) {
+                range = range.cloneRange();
+                range.setStartAfter(lastNode);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+    } else if (document.selection && document.selection.type != "Control") {
+        // IE < 9
+        document.selection.createRange().pasteHTML(html);
+    }
+}
+
+</script>
+
+<form action="javascript:confirm()" method="post" enctype=multipart/form-data id="blog_post_form">
+
+	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+	
+
+	<input type="text" id="caption_input" value='{% if post %}{{ post.caption }}{% endif %}' placeholder="Titel" class="title">
+	
+	
+	<textarea id="body_input" placeholder="Inhalt">{% if post %}{{ post.body }}{% endif %}</textarea> 
+	
+	<div id="mediaDiv">
+	
+		<div class="head"><p>Medien</p> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="black"/></svg></div>
+		
+		<div class="mediaItem">
+			<div class="media"><img class="acceptedMedia" src="{{ url_for('static', filename='img/tmp.jpg') }}" /></div>
+			<span class="infoText">tmp.jpg (64KB)</span>
+			<span class="actionText" onclick='pasteMedia(this)'>Einfügen</span>
+			<span class="actionText">Löschen</span>
+		</div>
+		
+		<div class="mediaItem">
+			<span class="infoText">Lade Medien hoch und füge sie dann in deinen Beitrag.</span>
+		</div>
+		
+	</div>
+	
+	
+	<div id="tagDiv">
+		<span>Tags (mit einem Komma trennen)</span>
+		<textarea></textarea>
+	</div>
+	
+	<div id="submitDiv">
+		<input type="submit" value="Veröffentlichen">
+	</div>
+
+</form>
+
+
+<!--
+
+************
+OLD STUFF
+
+
+
+<hr />
+
+<form action="javascript:confirm()" method="post" enctype=multipart/form-data id="blog_post_form">
+	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="text" id="caption_input" value='{% if post %}{{ post.caption }}{% endif %}' placeholder="Titel"> 
+    <div class="flex_wrapper">
+		<textarea id="body_input" placeholder="Inhalt">{% if post %}{{ post.body }}{% endif %}</textarea> 
+		<div class="files_container">
+			<div id="current_file_div">
+                <b>Bilder</b>
+			</div>
+            <input type=file id="file_input" onchange="addFile()" style="display: none;">
+            <input type="button" value="Bild hochladen" onclick="$(`#file_input`).click();" />
+		</div>
+	</div>
+    <input type="submit" value="Post veröffentlichen">
+</form>
+
+<form action="javascript:addTag()" id="tagForm">
+    <input type="text" id="tag_input">
+    <input type="submit" value="Tag Hinzufügen">
+</form>
+<div id="current_tag_div"></div>
+
+{% macro pushPopup(name, fName) %}
+<div id="post_{{ name }}_popup_wrapper" style="display: none; position: absolute; top: 0; left: 0; z-index: 1000; width: 100vw; height: 100vh; background: rgba(50, 50, 50, 0.8); justify-content: center;">
+    <div id="post_{{ name }}_popup_inner" style="height: 400px;">
+        <div id="post_{{ name }}_popup_main"></div>
+        <form action="javascript:close{{ fName }}Popup()">
+            <input type="number" id="post_{{ name }}_number_input">
+            <input type="submit" value="Push {{ fName }}">
+        </form>
+    </div>
+</div>
+{% endmacro %}
+
+{{ pushPopup('tag', 'Tag') }}
+{{ pushPopup('file', 'File') }}
+
+<script>
+    let destTagElem = $('#post_tag_popup_main');
+    let destTagWrapper = $('#post_tag_popup_wrapper');
+    let destTagInput = $('#post_tag_number_input');
+    let tagSrcId;
+
+    tagPopup = (id1) => {
+        tagSrcId = id1;
+        destTagWrapper.css("display", "flex");
+    }
+
+    closeTagPopup = () => {
+        targetId = parseInt(destTagInput.val());
+        if (targetId !== NaN) {
+            targetId--;
+            if (tagSrcId < targetId) targetId++;
+            if (tags[targetId-1] !== undefined) pushTag(tagSrcId, targetId);
+            else openPopup('Die angegebene ID ist nicht möglich!', '', '');
+        }
+        destTagInput.val('');
+        destTagWrapper.css({"display": "none"});
+    }
+    
+    let destFileElem = $('#post_file_popup_main');
+    let destFileWrapper = $('#post_file_popup_wrapper');
+    let destFileInput = $('#post_file_number_input');
+    let fileSrcId;
+    
+    filePopup = (id1) => {
+        fileSrcId = id1;
+        destFileWrapper.css("display", "flex");
+    }
+
+    closeFilePopup = () => {
+        targetId = parseInt(destFileInput.val());
+        if (targetId !== NaN) {
+            targetId--;
+            if (fileSrcId < targetId) targetId++;
+            if (files[targetId-1] !== undefined) pushFile(fileSrcId, targetId);
+            else openPopup('Die angegebene ID ist nicht möglich!', '', '');
+        }
+        destFileInput.val('');
+        destFileWrapper.css({"display": "none"});
+    }
+</script>-->

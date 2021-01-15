@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <script>
+        $(window).on('scroll', () => ajaxRequest(0))
+
+        let lowestScrollPos = 0;
+        let currentHeight = 0;
+        let route = "{{ route }}";
+
+        let requestId = [1, 1];
+        let maxReached = [false, false];
+        let inQueue = [0, 0];
+        let isProcessing = [0, 0];
+
+        function ajaxRequest(i) {
+            inQueue[i]++;
+            if (isProcessing[i] == 0) ajaxManager(i);
+        }
+        
+        async function ajaxManager(i) {
+            isProcessing[i]++;
+            while (inQueue[i] > 0) {
+                if (i == 0) await requestPost();
+                else if (i == 1) await requestComment();
+                inQueue[i]--;
+            }
+            isProcessing[i]--;
+        } 
+
+        async function ajaxPost(i, route, data, post) {
+            lowestScrollPos = Math.max(document.documentElement.scrollTop, lowestScrollPos);
+            if(post || !maxReached[i]) {
+                if (lowestScrollPos + (2*$(window).height()) > currentHeight) {
+                    return await $.post(route, data).done(response => response).fail(() => { openPopup('Verbindung zum Server fehlgeschlagen!', '', ''); return {'status': 0} });
+                }
+            }
+        }
+
+        async function requestPost() {
+            let response = await ajaxPost(0, route, "blog_id="+requestId[0], false);
+            if (response && response.article) {
+                const urlAuthor = "{{ url_for('blog_user_query', username='name1') }}".replace("name1", response.posted_by);
+                const urlDate = "{{ url_for('blog_date_query', day=5000, month=5000, year=5000) }}".replace("5000", response.day).replace("5000", response.month).replace("5000", response.year);
+                const urlPostMain = "{{ url_for('blog_post', id=0) }}".replace("0", response.id);
+                $("#content").html( 
+                    $("#content").html().replace( 
+                        /<!-- replace position for new blogs -->/g, `
+                        ${ requestId[0] != 1?'<hr />\n\n':'' }
+                        <article id='article_${ requestId[0] }'>\n
+                            <h2><a href="${ urlPostMain }">${ response.caption }</a></h2>\n
+                            <span class="subTitle">Veröffentlicht am <a href="${ urlDate }">${ response.date_created }</a> von <a href="${ urlAuthor }">${ response.posted_by }</a>${ '{{ current_user.admin_acc }}' ? ` <a href='/admin/edit/${ response.id }'>Edit</a>` : '' }</span><br />\n
+                            ${ response.tags!=''?`<span class="tags">Tags: ${ response.tags }</span>`:'' }\n
+                            <p>${ response.body }</p>\n
+                        </article>
+                        \n
+                        \n
+                        <!-- replace position for new blogs -->\n` 
+                    )
+                );
+                currentHeight += $(`#article_${ requestId[0] }`).height();
+                requestId[0]++;
+                if (response.is_main_page) {
+                    showComments();
+                    ajaxRequest(1); // requests a comment
+                    $(window).on('scroll', () => {
+                        ajaxRequest(0); // requests an article
+                        ajaxRequest(1); // requests a comment
+                    });
+                    stopAjax(0);
+                }
+                ajaxRequest(0); // requests an article
+            } else if (response) stopAjax(0);
+        }
+
+        requestPost();
+
+        function stopAjax(i) {
+            if (i == 0) $("#blog_loading_article").remove();
+            else if (i == 1) $("#comment_loading_div").remove();
+            maxReached[i] = true;
+        }
+
+        showComments = () => { $('#comments').css('display', 'block'); }
+
+        async function postComment() {
+            let response = await ajaxPost(1, route.replace('post', 'post_comment'), $('#comment_form').serialize(), true);
+            if (response && response.redirect) {
+                $('#comment_form textarea').val('');
+                maxReached[1] = false;
+                requestComment();
+            }
+            else openPopup(response.text, '', '');
+        }
+
+        async function deleteComment(commentIdToDelete) {
+            let response = await ajaxPost(1, route.replace('post', 'delete_comment'), 'comment_id='+commentIdToDelete, true);
+            if (response && response.comment) removeCommentFromHtml(commentIdToDelete);
+        }
+
+        function removeCommentFromHtml(id) {
+            $(`#comment_${ id }`).remove();
+            let i = id;
+        }
+
+        async function requestComment() {
+            let response = await ajaxPost(1, route.replace('post', 'get_comments'), 'comment_id='+requestId[1], false);
+            if (response && response.comment) {
+                const urlAuthor = "{{ url_for('blog_user_query', username='name1') }}".replace("name1", response.posted_by);
+                const urlDate = "{{ url_for('blog_date_query', day=5000, month=5000, year=5000) }}".replace("5000", response.day).replace("5000", response.month).replace("5000", response.year);
+                $('#commentSection').append(`
+                    <div class='comment' id='comment_${ response.id }'>\n
+                        <span class="subTitle">Kommentiert am <a href="${ urlDate }">${ response.date_created }</a> von <a href="${ urlAuthor }">${ response.posted_by }</a>${'{{ current_user.id }}' == response.author_id || '{{ current_user.admin_acc }}' ? ` <a onclick="deleteComment(${ response.id })">Delete</a>` : '' }</span><br />\n
+                        <p>${ response.body }</p>\n
+                    </div>\n
+                `);
+                currentHeight += $(`#comment_${ response.id }`).height();
+                requestId[1]++;
+                ajaxRequest(1); // requests a comment
+            } else stopAjax(1);
+        }
+    </script>
+	<link href="{{ url_for('static', filename='css/blog.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %} 
+	<article>
+    {% if request.path != "/blog" %}
+    <a class="button" href="{{ url_for('blog') }}">&larr; Zurück zum Blog</a>
+    {% endif %}
+    {% if post_count == 0 %}
+        <p>Es sind keine Blogposts verfügbar.</p>
+    {% endif %}
+    </article>
+
+    <!-- replace position for new blogs -->
+
+    <article id="blog_loading_article">
+        <h2>Beiträge werden geladen ...</h2>
+    </article>
+	
+    <section id='comments' style="display: none;">
+        <hr />
+	
+        <br />
+        <p>Kommentare</p>
+        
+        <form action="javascript:postComment()" method="post" id="comment_form">
+            <textarea name="body" placeholder="Lasse einen Kommentar da"></textarea>
+            <button type="submit">Senden</button>
+        </form>
+
+        <div id="commentSection">
+            <!-- position for comments -->
+            <p id="no_comments_msg">Es sind keine Kommentare verfügbar.</p>
+        </div>
+
+        <div id='comment_loading_div'>
+            <h2>Kommentare werden geladen ...</h2>
+        </div>
+    </section>
+{% endblock %}

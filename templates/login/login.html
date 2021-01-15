@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block head%}
+	<link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %} 
+	<form action="javascript:loginPopup()" id="login_form" class="login" autocomplete="off" novalidate>
+			{{ form.hidden_tag() }}
+			{{ form.username(size=32) }}
+			{{ form.password(size=32) }}
+			{{ form.submit() }}
+				
+		<div id="containerA">
+			<div id="containerB">{{ form.remember_me() }} Angemeldet bleiben</div>
+			<a href="#">Passwort vergessen?</a>
+		</div>
+		
+		<hr />
+		
+		<p id="registerText">Noch kein Konto? <a href="{{ url_for('register') }}">Hier registrieren!</a></p>
+	</form>
+{% endblock %}
+
+{% block script_footer %}
+	<script>
+		loginPopup = () => openPopup('', '/login', $('#login_form').serialize() + '&remember_me=' + $("#remember_me").is(":checked"));
+	</script>
+{% endblock %}

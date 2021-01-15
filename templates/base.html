@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+	
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		
+		<title id="tabTitle">{{ title }} | P-Seminar PROJECT JUMBO</title>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<!-- used for offline testing -->
+		<script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+		<link href="https://fonts.googleapis.com/css?family=Roboto:400,900|Alata|Roboto+Slab&display=swap" rel="stylesheet"> 
+		
+		<link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+		<link href="{{ url_for('static', filename='css/nav.css') }}" rel="stylesheet">
+		<link href="{{ url_for('static', filename='css/footer.css') }}" rel="stylesheet">
+
+		<link href="{{ url_for('static', filename='css/drag_and_drop.css') }}" rel="stylesheet">
+		
+		<script> 
+			// needed for management of the csrft-token security for forms	
+			$.ajaxSetup({ 
+				beforeSend: (xhr, settings) => {
+					if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token() }}"); 
+				} 
+			});
+		</script>
+		<script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/popups.js') }}"></script>
+		
+		<script defer>
+		
+		function getCookie(name) {
+			var dc = document.cookie;
+			var prefix = name + "=";
+			var begin = dc.indexOf("; " + prefix);
+			if (begin == -1) {
+				begin = dc.indexOf(prefix);
+				if (begin != 0) return null;
+			}
+			else
+			{
+				begin += 2;
+				var end = document.cookie.indexOf(";", begin);
+				if (end == -1) {
+				end = dc.length;
+				}
+			}
+			// because unescape has been deprecated, replaced with decodeURI
+			//return unescape(dc.substring(begin + prefix.length, end));
+			return decodeURI(dc.substring(begin + prefix.length, end));
+		} 
+		
+		function setCookie(cname, cvalue, exdays) {
+			var d = new Date();
+			d.setTime(d.getTime() + (exdays*24*60*60*1000));
+			var expires = "expires="+ d.toUTCString();
+			document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+		}
+
+		</script>
+		
+		<script>let title = "{{ title }}";</script>
+		
+		{% block head %}  {% endblock %}
+		
+	</head>
+	
+	<body>
+	
+		<div id="container">
+		
+			<div id="popup" style="display: none;">
+				<div class="inner">
+					<div id="popup_text"></div>
+					<button type="submit" onclick="closePopup()">Schließen</button>
+				</div>
+			</div>
+		
+			<nav id="nav" bg>
+					
+				<a href="{{ url_for('index') }}">Project Jumbo</a>
+				
+				<button onclick="toggleMenu();"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M0 0 h24v24H0z" fill="none"/><path class="line line-1" d="M3 8h18v-2H3v2z"/><path class="line line-2" d="M3 13h18v-2H3v2z"/><path class="line line-3" d="M3 13h18v-2H3v2z"/><path class="line line-4" d="M3 18h18v-2H3v2z"/></svg></button>
+					
+				<ul>
+					<li><a href="{{ url_for('index') }}#begin">Startseite</a></li>
+					<li><a href="{{ url_for('blog') }}">Blog</a></li>
+					<li><a href="{{ url_for('contact') }}">Kontakt</a></li>
+					{% if current_user.is_authenticated %}
+					<li><a href="{{ url_for('user_page') }}">Account</a></li>
+					<li><a href="{{ url_for('logout') }}">Logout</a></li>
+					{% else %}
+					<li><a href="{{ url_for('login') }}">Login</a></li>
+					{% endif %}
+				</ul>
+					
+			</nav>
+			
+			<div class="spacer nav"></div>
+
+			{% block content_header %}  {% endblock %}
+			
+			<section id="content">
+			
+				<h1 id='title'>{{ title }}</h1>
+			
+				{% block content %}  {% endblock %}
+
+			</section>
+			
+			<div class="spacer footer"></div>
+			
+			<footer id="footer">
+				
+				<p>
+					&copy; <script>document.write(new Date().getFullYear());</script> P-Seminar PROJECT JUMBO<br />
+					Designed by Samuel Kroiß<br />
+					Backend by Lukas Brennauer<br />
+					<a href="{{ url_for('impressum') }}">Impressum</a> - <a href="{{ url_for('impressum') }}#datenschutz">Datenschutz</a><br />
+					{% if current_user.is_authenticated %}
+					<a href="{{ url_for('user_page') }}">Account</a> - <a href="{{ url_for('logout') }}">Logout</a>
+					{% else %}
+					<a href="{{ url_for('login') }}">Login</a>
+					{% endif %}
+				</p>
+				
+			</footer>
+			
+			{% block script_footer %}  {% endblock %}
+		
+		</div>
+	</body>
+	
+</html>
+
+<script>
+
+if(getCookie("acceptCookies") == null)
+{
+	openPopup("Wir verwenden Cookies. Mit der Nutzung der Website erklärst du sich damit einverstanden...","","");
+	setCookie("acceptCookies", "true", 100);
+}
+		
+</script>

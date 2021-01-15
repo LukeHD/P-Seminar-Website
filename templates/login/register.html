@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+
+{% block head%}
+    <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <form action="javascript:registerPopup()" id="register_form" class="register" autocomplete="off" method="post">
+        <div class="inner">
+        
+            {{ form.hidden_tag() }}
+            {{ form.username(size=32) }}
+            {{ form.email(size=64) }}
+            {{ form.password(size=32) }}
+            {{ form.password2(size=32) }}
+            {{ form.submit() }}
+        </div>
+    </form>
+{% endblock %}
+
+{% block script_footer %}
+    <script>
+        registerPopup = () => openPopup('', '/register', $('#register_form').serialize());
+    </script>
+{% endblock %}

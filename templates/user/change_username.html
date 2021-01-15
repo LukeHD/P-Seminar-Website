@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="javascript:changeUsernamePopup();" id="change_username_form">
+        <div class="inner">
+            {{ form.username(size=32) }}
+            {{ form.submit() }}
+        </div>
+    </form>
+{% endblock %}
+
+{% block script_footer %}
+    <script>
+        changeUsernamePopup = () => openPopup('', '/user/change_username', $("#change_username_form").serialize());
+    </script>
+{% endblock %}
